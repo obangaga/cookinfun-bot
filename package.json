@@ -1,0 +1,11 @@
+{
+  "name": "cookinfun-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "cheerio": "^1.0.0-rc.12",
+    "puppeteer-core": "^21.3.8",
+    "chrome-aws-lambda": "^10.1.0"
+  }
+}
