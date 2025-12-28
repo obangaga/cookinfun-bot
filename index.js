@@ -1,22 +1,25 @@
-import fetch from "node-fetch";
+import chromium from "chrome-aws-lambda"
 import * as cheerio from "cheerio";
-import chromium from "chrome-aws-lambda";
+import fetch from "node-fetch";
 
 const BOT_TOKEN = "8390602723:AAF7O4Tc-RJWcaZejRWxm_h_FeKaD5W4qXw";
-const CHAT_ID = "7699020587";
+const CHAT_ID = "7699020587"; // ID kamu
 
 export default async function handler(req, res) {
   let browser = null;
   try {
     browser = await chromium.puppeteer.launch({
-      args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
+      args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
-      headless: chromium.headless,
+      headless: true,
     });
 
     const page = await browser.newPage();
-    await page.goto("https://cookin.fun", { waitUntil: "networkidle2", timeout: 60000 });
+    await page.goto("https://cookin.fun", {
+      waitUntil: "networkidle2",
+      timeout: 60000,
+    });
 
     const html = await page.content();
     const $ = cheerio.load(html);
@@ -35,27 +38,27 @@ export default async function handler(req, res) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: CHAT_ID,
-          text: "⚠️ Cookin.fun tidak mengembalikan token apa pun (mungkin halaman belum dimuat).",
+          text: "⚠️ Tidak ada token baru di Cookin.fun (mungkin halaman belum render).",
         }),
       });
-      return res.status(200).json({ ok: false, reason: "No tokens found" });
+      return res.status(200).json({ ok: false, reason: "no tokens" });
     }
 
-    const top3 = links.slice(0, 3).map((x) => `https://cookin.fun${x}`).join("\n🔹 ");
-
-    const message = `🔥 *Cookin.fun New Tokens Detected*\n\n🔹 ${top3}`;
+    const resultText =
+      "🔥 *Cookin.fun New Tokens Detected:*\n\n" +
+      links.slice(0, 3).map((x) => `🔹 https://cookin.fun${x}`).join("\n");
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: CHAT_ID,
-        text: message,
+        text: resultText,
         parse_mode: "Markdown",
       }),
     });
 
-    res.status(200).json({ ok: true, count: links.length });
+    res.status(200).json({ ok: true, tokens: links.length });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -65,3 +68,4 @@ export default async function handler(req, res) {
     }
   }
 }
+
